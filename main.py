@@ -1,6 +1,7 @@
 # main.py
 import asyncio
 from collectors.douban_collector import DoubanCollector
+from collectors.mock_collector import MockCollector
 from collectors.web_scraper import WebScraper
 from processors.text_processor import TextProcessor
 from utils.db_helper import DatabaseHelper
@@ -22,18 +23,31 @@ class DataCollectionOrchestrator:
         # 步骤1：从多个数据源收集数据
         all_dramas = []
         
-        # 豆瓣数据收集
-        async with DoubanCollector() as douban:
-            logger.info("开始收集豆瓣数据...")
-            douban_dramas = await douban.collect_drama_list(count=50)
+        # 使用模拟数据收集器（豆瓣API暂时无法访问）
+        async with MockCollector() as mock_collector:
+            logger.info("开始收集模拟数据...")
+            mock_dramas = await mock_collector.collect_drama_list(count=5)
             
             # 收集详细信息
-            for drama in douban_dramas[:10]:  # MVP阶段先收集10部的详细信息
-                detail = await douban.collect_drama_detail(drama['id'])
+            for drama in mock_dramas:
+                detail = await mock_collector.collect_drama_detail(drama['id'])
                 drama.update(detail)
                 
-            all_dramas.extend(douban_dramas)
-            logger.info(f"豆瓣数据收集完成，共{len(douban_dramas)}部")
+            all_dramas.extend(mock_dramas)
+            logger.info(f"模拟数据收集完成，共{len(mock_dramas)}部")
+        
+        # 豆瓣数据收集 (暂时禁用，API返回403)
+        # async with DoubanCollector() as douban:
+        #     logger.info("开始收集豆瓣数据...")
+        #     douban_dramas = await douban.collect_drama_list(count=50)
+        #     
+        #     # 收集详细信息
+        #     for drama in douban_dramas[:10]:  # MVP阶段先收集10部的详细信息
+        #         detail = await douban.collect_drama_detail(drama['id'])
+        #         drama.update(detail)
+        #         
+        #     all_dramas.extend(douban_dramas)
+        #     logger.info(f"豆瓣数据收集完成，共{len(douban_dramas)}部")
         
         # 网页爬虫收集（可选）
         # async with WebScraper() as scraper:
@@ -73,7 +87,7 @@ class DataCollectionOrchestrator:
                 cleaned_drama['characters'] = characters
                 
                 # 添加元数据
-                cleaned_drama['data_source'] = 'douban'
+                cleaned_drama['data_source'] = drama.get('source_platform', 'unknown')
                 cleaned_drama['processing_version'] = '1.0'
                 
                 processed.append(cleaned_drama)
