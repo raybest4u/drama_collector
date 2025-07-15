@@ -1,0 +1,48 @@
+{"commands": [
+    {
+      "name": "/test",
+      "description": "Run tests",
+      "script": "python -m pytest"
+    },
+    {
+      "name": "/commit",
+      "description": "Quick commit",
+      "script": "git add -A && git commit -m"
+    },
+    {
+      "name": "/continue",
+      "description": "Show where we left off",
+      "script": "cat .claude/context.json && git log --oneline -1"
+    },
+    {
+      "name": "/lint",
+      "description": "Run linting checks",
+      "script": "flake8 src/ tests/ && mypy src/"
+    },
+    {
+      "name": "/venv",
+      "description": "Activate virtual environment",
+      "script": "source venv/bin/activate"
+    },
+    {
+      "name": "/deps",
+      "description": "Install and update requirements",
+      "script": "pip install -r requirements.txt && pip freeze > requirements.txt"
+    },
+    {
+      "name": "/iterate",
+      "description": "Run tests, format, lint, and commit",
+      "script": "black src/ tests/ && flake8 src/ tests/ && python -m pytest && git add -A && git commit -m 'Iteration complete'"
+    },
+    {
+      "name": "/status",
+      "description": "Check project status, git log, and TODOs",
+      "script": "echo '=== Git Status ===' && git status && echo '\n=== Recent Commits ===' && git log --oneline -10 && echo '\n=== TODOs ===' && grep -r 'TODO' src/ tests/ || echo 'No TODOs found'"
+    },
+    {
+      "name": "/restore-session",
+      "description": "Load last saved session and show context",
+      "script": "python scripts/restore_session.py"
+    }
+  ]
+}

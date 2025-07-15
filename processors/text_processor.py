@@ -2,7 +2,11 @@
 import re
 import jieba
 from typing import List, Dict
-import openai  # 可选：用于高级文本处理
+try:
+    import openai  # 可选：用于高级文本处理
+    HAS_OPENAI = True
+except ImportError:
+    HAS_OPENAI = False
 
 class TextProcessor:
     def __init__(self):
@@ -90,7 +94,7 @@ class TextProcessor:
         for word in words:
             # 简单规则：2-4个字符，包含常见人名字符
             if (2 <= len(word) <= 4 and 
-                any(char in word for char in '小大老张王李赵刘陈杨黄周吴徐孙马朱胡林郭何高梁宋郑谢韩唐冯于董萧程曹袁邓许傅沈曾彭吕苏卢蒋魏陈蔡贾丁薛叶阎余潘杜戴夏钟汪田任姜范方石姚谭盛邹熊金陆郝孔白崔康毛邱秦江史顾侯邵孟龙万段漕钱汤尹黎易常武乔贺赖龚文庞樊兰殷施陶洪翟安颜倪严牛温芦季俞章鲁葛伍韦申尤毕聂丛焦向柳邢路岳齐沿梅莫庄辛管祝左涂谷祁时舒耿牟卜路詹关苗凌费纪靳盛童欧甄项曲成游阳裴席卫查屈鲍位覃霍翁隋植甘景薄单包司柏宁柯阮桂闵欧阳令狐皇甫上官司徒诸葛司马宇文呼延夏侯'):
+                any(char in word for char in '小大老张王李赵刘陈杨黄周吴徐孙马朱胡林郭何高梁宋郑谢韩唐冯于董萧程曹袁邓许傅沈曾彭吕苏卢蒋魏陈蔡贾丁薛叶阎余潘杜戴夏钟汪田任姜范方石姚谭盛邹熊金陆郝孔白崔康毛邱秦江史顾侯邵孟龙万段漕钱汤尹黎易常武乔贺赖龚文庞樊兰殷施陶洪翟安颜倪严牛温芦季俞章鲁葛伍韦申尤毕聂丛焦向柳邢路岳齐沿梅莫庄辛管祝左涂谷祁时舒耿牟卜路詹关苗凌费纪靳盛童欧甄项曲成游阳裴席卫查屈鲍位覃霍翁隋植甘景薄单包司柏宁柯阮桂闵欧阳令狐皇甫上官司徒诸葛司马宇文呼延夏侯')):
                 names.append(word)
                 
         return list(set(names))  # 去重

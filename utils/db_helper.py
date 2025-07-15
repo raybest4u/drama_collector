@@ -21,6 +21,9 @@ class DatabaseHelper:
     
     async def save_dramas_batch(self, dramas: List[Dict]) -> List[str]:
         """批量保存剧目"""
+        if not dramas:
+            return []
+            
         now = datetime.now()
         for drama in dramas:
             drama['created_at'] = now
