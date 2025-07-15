@@ -5,9 +5,13 @@ from collectors.mock_collector import MockCollector
 from collectors.multi_source_collector import MultiSourceCollector
 from collectors.web_scraper import WebScraper
 from processors.text_processor import TextProcessor
+from processors.enhanced_text_processor import EnhancedTextProcessor
+from utils.data_validator import DataValidator, ValidationLevel, DataType
+from utils.batch_processor import BatchProcessorManager
 from utils.db_helper import DatabaseHelper
 from typing import List, Dict
 import logging
+from datetime import datetime
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -16,6 +20,9 @@ class DataCollectionOrchestrator:
     def __init__(self):
         self.db = DatabaseHelper()
         self.text_processor = TextProcessor()
+        self.enhanced_processor = EnhancedTextProcessor()
+        self.validator = DataValidator(ValidationLevel.MODERATE)
+        self.batch_manager = BatchProcessorManager()
         
     async def run_collection_pipeline(self):
         """运行完整的数据收集流程"""
@@ -64,17 +71,95 @@ class DataCollectionOrchestrator:
         #     web_dramas = await scraper.collect_drama_list()
         #     all_dramas.extend(web_dramas)
         
-        # 步骤2：数据处理和结构化
-        logger.info("开始处理数据...")
-        processed_dramas = await self.process_dramas(all_dramas)
+        # 步骤2：数据验证和清洗
+        logger.info("开始验证和清洗数据...")
+        validated_dramas = self.validate_and_clean_dramas(all_dramas)
         
-        # 步骤3：存储到数据库
+        # 步骤3：增强数据处理和结构化
+        logger.info("开始增强处理数据...")
+        processed_dramas = await self.process_dramas_enhanced(validated_dramas)
+        
+        # 步骤4：存储到数据库
         logger.info("开始存储数据...")
         saved_ids = await self.db.save_dramas_batch(processed_dramas)
         
         logger.info(f"数据收集完成！共处理{len(processed_dramas)}部剧目，存储ID: {saved_ids[:5]}...")
         
         return len(processed_dramas)
+    
+    def validate_and_clean_dramas(self, raw_dramas: List[Dict]) -> List[Dict]:
+        """验证和清洗剧目数据"""
+        validated_dramas = []
+        
+        for drama in raw_dramas:
+            try:
+                validation_result = self.validator.validate_drama_data(drama)
+                
+                if validation_result.is_valid:
+                    validated_dramas.append(validation_result.cleaned_data)
+                    if validation_result.warnings:
+                        logger.warning(f"剧目 {drama.get('title', 'Unknown')} 验证警告: {validation_result.warnings}")
+                else:
+                    logger.error(f"剧目 {drama.get('title', 'Unknown')} 验证失败: {validation_result.errors}")
+                    
+            except Exception as e:
+                logger.error(f"验证剧目失败: {drama.get('title', 'Unknown')}, 错误: {e}")
+                
+        logger.info(f"数据验证完成，有效数据: {len(validated_dramas)}/{len(raw_dramas)}")
+        return validated_dramas
+    
+    async def process_dramas_enhanced(self, validated_dramas: List[Dict]) -> List[Dict]:
+        """增强处理剧目数据"""
+        processed_dramas = []
+        
+        for drama in validated_dramas:
+            try:
+                # 基础数据清洗
+                cleaned_drama = self.clean_drama_data(drama)
+                
+                # 增强文本处理
+                if cleaned_drama.get('summary'):
+                    # 提取增强剧情点
+                    enhanced_plot_points = self.enhanced_processor.extract_enhanced_plot_points(
+                        cleaned_drama['summary']
+                    )
+                    cleaned_drama['enhanced_plot_points'] = enhanced_plot_points
+                    
+                    # 角色画像分析
+                    character_profiles = self.enhanced_processor.extract_character_profiles(
+                        cleaned_drama['summary']
+                    )
+                    cleaned_drama['character_profiles'] = character_profiles
+                    
+                    # 主题分析
+                    drama_themes = self.enhanced_processor.analyze_drama_themes(
+                        cleaned_drama['summary']
+                    )
+                    cleaned_drama['themes'] = drama_themes
+                    
+                    # 戏剧结构分析
+                    if enhanced_plot_points:
+                        dramatic_structure = self.enhanced_processor.extract_dramatic_structure(
+                            enhanced_plot_points
+                        )
+                        cleaned_drama['dramatic_structure'] = dramatic_structure
+                
+                # 提取角色信息（保留原有逻辑）
+                characters = self.extract_characters(cleaned_drama)
+                cleaned_drama['characters'] = characters
+                
+                # 添加处理元数据
+                cleaned_drama['data_source'] = drama.get('source_platform', 'unknown')
+                cleaned_drama['processing_version'] = '2.0'  # 升级版本号
+                cleaned_drama['processing_timestamp'] = datetime.utcnow().isoformat()
+                
+                processed_dramas.append(cleaned_drama)
+                
+            except Exception as e:
+                logger.error(f"增强处理剧目失败: {drama.get('title', 'Unknown')}, 错误: {e}")
+                continue
+                
+        return processed_dramas
     
     async def process_dramas(self, raw_dramas: List[Dict]) -> List[Dict]:
         """处理和结构化剧目数据"""

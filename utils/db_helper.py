@@ -52,7 +52,36 @@ class DatabaseHelper:
     
     async def create_indexes(self):
         """创建数据库索引"""
-        await self.dramas_collection.create_index("title")
-        await self.dramas_collection.create_index("genre")
-        await self.dramas_collection.create_index("tags")
-        await self.dramas_collection.create_index("source_platform")
+        try:
+            # 基础索引
+            await self.dramas_collection.create_index("title")
+            await self.dramas_collection.create_index("year")
+            await self.dramas_collection.create_index("data_source")
+            await self.dramas_collection.create_index("rating")
+            await self.dramas_collection.create_index("created_at")
+            await self.dramas_collection.create_index("source_platform")
+            
+            # 复合索引（优化常见查询）
+            await self.dramas_collection.create_index([("year", -1), ("rating", -1)])
+            await self.dramas_collection.create_index([("data_source", 1), ("created_at", -1)])
+            await self.dramas_collection.create_index([("genre", 1), ("year", -1)])
+            await self.dramas_collection.create_index([("processing_version", 1), ("updated_at", -1)])
+            
+            # 文本搜索索引
+            await self.dramas_collection.create_index([("title", "text"), ("summary", "text")])
+            
+            # 稀疏索引（如果有重复数据，跳过唯一约束）
+            try:
+                await self.dramas_collection.create_index("id", unique=True, sparse=True)
+            except Exception as e:
+                print(f"ID索引创建跳过（可能存在重复数据）: {e}")
+                await self.dramas_collection.create_index("id", sparse=True)
+            
+            await self.dramas_collection.create_index("themes.primary_themes.theme", sparse=True)
+            await self.dramas_collection.create_index("tags")
+            
+            print("数据库索引创建完成")
+            
+        except Exception as e:
+            print(f"索引创建警告: {e}")
+            print("继续运行...")
