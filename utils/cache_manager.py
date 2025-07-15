@@ -1,13 +1,20 @@
 # utils/cache_manager.py
-import redis
 import json
 import logging
 import hashlib
 from typing import Any, Optional, Dict, List
 from datetime import datetime, timedelta
 import asyncio
-import aioredis
 from dataclasses import asdict, dataclass
+
+# Optional redis import with fallback
+try:
+    import aioredis
+    REDIS_AVAILABLE = True
+except ImportError:
+    REDIS_AVAILABLE = False
+    aioredis = None
+    logging.getLogger(__name__).warning("aioredis not available, cache will be disabled")
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +54,11 @@ class CacheManager:
     
     async def connect(self):
         """连接到Redis"""
+        if not REDIS_AVAILABLE:
+            logger.warning("Redis不可用，缓存功能将被禁用")
+            self.is_connected = False
+            return
+            
         try:
             redis_url = f"redis://{self.config.host}:{self.config.port}/{self.config.db}"
             if self.config.password:
