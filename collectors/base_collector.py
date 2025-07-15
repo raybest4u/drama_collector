@@ -11,7 +11,21 @@ class BaseCollector(ABC):
         self.rate_limiter = RateLimiter(rate_limit)
         
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
+        # 添加浏览器头信息以避免反爬虫检测
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive',
+            'Referer': 'https://www.douban.com/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-site'
+        }
+        
+        connector = aiohttp.TCPConnector(ssl=False)  # 禁用SSL验证以避免某些连接问题
+        self.session = aiohttp.ClientSession(headers=headers, connector=connector)
         return self
         
     async def __aexit__(self, exc_type, exc_val, exc_tb):

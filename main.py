@@ -2,6 +2,7 @@
 import asyncio
 from collectors.douban_collector import DoubanCollector
 from collectors.mock_collector import MockCollector
+from collectors.multi_source_collector import MultiSourceCollector
 from collectors.web_scraper import WebScraper
 from processors.text_processor import TextProcessor
 from utils.db_helper import DatabaseHelper
@@ -23,18 +24,27 @@ class DataCollectionOrchestrator:
         # 步骤1：从多个数据源收集数据
         all_dramas = []
         
-        # 使用模拟数据收集器（豆瓣API暂时无法访问）
-        async with MockCollector() as mock_collector:
-            logger.info("开始收集模拟数据...")
-            mock_dramas = await mock_collector.collect_drama_list(count=5)
+        # 使用多数据源收集器
+        async with MultiSourceCollector() as multi_collector:
+            logger.info("开始从多数据源收集数据...")
+            
+            # 获取数据源状态
+            status = multi_collector.get_source_status()
+            logger.info(f"可用数据源: {list(status.keys())}")
+            
+            # 收集剧目列表
+            collected_dramas = await multi_collector.collect_drama_list(count=10)
             
             # 收集详细信息
-            for drama in mock_dramas:
-                detail = await mock_collector.collect_drama_detail(drama['id'])
+            for drama in collected_dramas:
+                detail = await multi_collector.collect_drama_detail(
+                    drama['id'], 
+                    preferred_source=drama.get('data_source')
+                )
                 drama.update(detail)
                 
-            all_dramas.extend(mock_dramas)
-            logger.info(f"模拟数据收集完成，共{len(mock_dramas)}部")
+            all_dramas.extend(collected_dramas)
+            logger.info(f"多数据源收集完成，共{len(collected_dramas)}部")
         
         # 豆瓣数据收集 (暂时禁用，API返回403)
         # async with DoubanCollector() as douban:
