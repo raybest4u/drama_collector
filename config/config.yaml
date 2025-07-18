@@ -1,0 +1,87 @@
+app_name: Drama Collector
+cache:
+  db: 0
+  default_ttl: 3600
+  enabled: true
+  host: localhost
+  max_retries: 3
+  password: null
+  port: 6379
+data_sources:
+  douban:
+    api_key: null
+    base_url: null
+    custom_headers: {}
+    enabled: true
+    max_retries: 3
+    priority: 1
+    rate_limit: 2
+    retry_delay: 1.0
+    timeout: 30.0
+  mock:
+    api_key: null
+    base_url: null
+    custom_headers: {}
+    enabled: true
+    max_retries: 3
+    priority: 3
+    rate_limit: 5
+    retry_delay: 1.0
+    timeout: 30.0
+  mydramalist:
+    api_key: null
+    base_url: null
+    custom_headers: {}
+    enabled: true
+    max_retries: 3
+    priority: 2
+    rate_limit: 3
+    retry_delay: 1.0
+    timeout: 30.0
+database:
+  collection: dramas
+  connection_timeout: 30
+  database: drama_database
+  host: localhost
+  max_pool_size: 100
+  password: null
+  port: 27017
+  username: null
+debug: false
+environment: development
+export:
+  compress_exports: true
+  enabled: true
+  export_formats:
+  - json
+  - csv
+  include_metadata: true
+  max_export_size_mb: 100
+  output_directory: ./data/exports
+monitoring:
+  alert_thresholds:
+    cpu_usage: 80.0
+    error_rate: 5.0
+    memory_usage: 80.0
+    processing_time: 30.0
+  enabled: true
+  log_level: INFO
+  metrics_interval: 10
+  metrics_retention_hours: 24
+  performance_alerts: true
+processing:
+  batch_size: 10
+  cache_ttl: 3600
+  enable_caching: true
+  enable_enhanced_nlp: true
+  max_concurrent_jobs: 5
+  quality_threshold: 7.0
+  validation_level: moderate
+scheduler:
+  auto_retry_failed_jobs: true
+  cleanup_completed_jobs_hours: 24
+  collection_interval_hours: 6
+  enabled: true
+  maintenance_hour: 2
+  max_collection_duration_hours: 4
+version: 2.0.0

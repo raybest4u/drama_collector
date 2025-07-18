@@ -3,12 +3,14 @@ import asyncio
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
-from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Query, Path
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends, Query, Path as PathParam
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 import uvicorn
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from orchestrator.drama_orchestrator import get_orchestrator, OrchestrationState
 from config.config_manager import get_config_manager
@@ -97,6 +99,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 添加静态文件服务
+dashboard_path = Path(__file__).parent.parent / "dashboard"
+if dashboard_path.exists():
+    app.mount("/static", StaticFiles(directory=str(dashboard_path / "static")), name="static")
+
 
 # 依赖注入
 def get_orchestrator_instance():
@@ -131,8 +138,23 @@ async def root():
         "message": "Drama Collector API",
         "version": "2.0.0",
         "status": "running",
-        "docs": "/docs"
+        "docs": "/docs",
+        "dashboard": "/dashboard"
     }
+
+
+@app.get("/dashboard", response_class=HTMLResponse)
+async def dashboard():
+    """Web Dashboard"""
+    dashboard_file = Path(__file__).parent.parent / "dashboard" / "templates" / "index.html"
+    
+    if not dashboard_file.exists():
+        raise HTTPException(status_code=404, detail="Dashboard not found")
+    
+    with open(dashboard_file, 'r', encoding='utf-8') as f:
+        content = f.read()
+    
+    return HTMLResponse(content=content)
 
 
 @app.get("/health", response_model=Dict[str, Any])
@@ -167,7 +189,7 @@ async def get_system_status(orchestrator_inst = Depends(get_orchestrator_instanc
         # 获取性能监控信息
         performance_stats = {}
         if hasattr(orchestrator_inst, 'performance_monitor'):
-            performance_stats = orchestrator_inst.performance_monitor.get_current_stats()
+            performance_stats = orchestrator_inst.performance_monitor.get_performance_summary()
         
         return SystemStatus(
             orchestrator=orchestrator_status,
@@ -441,7 +463,7 @@ async def get_dramas(
 
 @app.get("/dramas/{drama_id}", response_model=Dict[str, Any])
 async def get_drama_detail(
-    drama_id: str = Path(..., description="剧目ID"),
+    drama_id: str = PathParam(..., description="剧目ID"),
     db = Depends(get_db_helper_instance)
 ):
     """获取剧目详情"""
@@ -477,7 +499,7 @@ async def get_performance_stats(orchestrator_inst = Depends(get_orchestrator_ins
     """获取性能统计"""
     try:
         if hasattr(orchestrator_inst, 'performance_monitor') and orchestrator_inst.performance_monitor:
-            return orchestrator_inst.performance_monitor.get_current_stats()
+            return orchestrator_inst.performance_monitor.get_performance_summary()
         else:
             return {"message": "性能监控未启用"}
             

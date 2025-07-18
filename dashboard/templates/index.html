@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drama Collector Dashboard</title>
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎭</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1>🎭 Drama Collector Dashboard</h1>
+            <p class="subtitle">短剧数据收集系统管理平台</p>
+        </header>
+
+        <!-- Alert Container -->
+        <div id="alert-container"></div>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <a href="#" class="nav-btn active" data-section="overview">Overview</a>
+            <a href="#" class="nav-btn" data-section="jobs">Jobs</a>
+            <a href="#" class="nav-btn" data-section="data">Data</a>
+            <a href="#" class="nav-btn" data-section="config">Config</a>
+            <a href="#" class="nav-btn" data-section="monitoring">Monitoring</a>
+        </nav>
+
+        <!-- Overview Section -->
+        <section id="overview-section" class="content-section active">
+            <h2>System Overview</h2>
+            
+            <!-- Status Cards -->
+            <div class="status-grid">
+                <div class="status-card">
+                    <h3>System Status</h3>
+                    <div class="status-value">
+                        <span id="system-indicator" class="status-indicator status-idle"></span>
+                        <span id="system-status">Loading...</span>
+                    </div>
+                    <div class="status-label">Current State</div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>Components</h3>
+                    <div class="status-value" id="components-status">Loading...</div>
+                    <div class="status-label">Initialization Status</div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>Total Jobs</h3>
+                    <div class="status-value" id="total-jobs">0</div>
+                    <div class="status-label">All Time</div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>Successful Jobs</h3>
+                    <div class="status-value" id="successful-jobs">0</div>
+                    <div class="status-label">Completed Successfully</div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>Failed Jobs</h3>
+                    <div class="status-value" id="failed-jobs">0</div>
+                    <div class="status-label">Encountered Errors</div>
+                </div>
+                
+                <div class="status-card">
+                    <h3>Last Updated</h3>
+                    <div class="status-value" id="last-updated">Never</div>
+                    <div class="status-label">Data Refresh Time</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <div class="action-buttons">
+                    <button id="start-orchestrator" class="btn btn-success">Start Orchestrator</button>
+                    <button id="stop-orchestrator" class="btn btn-danger">Stop Orchestrator</button>
+                    <button id="start-job" class="btn">Start Collection Job</button>
+                    <button id="export-data" class="btn btn-secondary">Export Data</button>
+                    <button id="refresh-data" class="btn btn-secondary">Refresh Data</button>
+                </div>
+                <div class="auto-refresh-control">
+                    <label>
+                        <input type="checkbox" id="auto-refresh" checked>
+                        Auto-refresh every 5 seconds
+                    </label>
+                </div>
+            </div>
+
+            <!-- Current Job -->
+            <div class="current-job-section">
+                <h3>Current Job</h3>
+                <div id="current-job-info">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <!-- Recent Jobs -->
+            <div class="recent-jobs-section">
+                <h3>Recent Jobs</h3>
+                <div id="recent-jobs">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Jobs Section -->
+        <section id="jobs-section" class="content-section">
+            <h2>Job Management</h2>
+            
+            <!-- Job Creation Form -->
+            <div class="job-form-section">
+                <h3>Start New Collection Job</h3>
+                <form id="job-form">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="count">Collection Count:</label>
+                                <input type="number" id="count" name="count" class="form-input" 
+                                       value="20" min="1" max="1000">
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label" for="quality_threshold">Quality Threshold:</label>
+                                <input type="number" id="quality_threshold" name="quality_threshold" 
+                                       class="form-input" step="0.1" min="0" max="10" placeholder="Optional">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="export_enabled" class="form-checkbox" checked>
+                            Enable automatic export after collection
+                        </label>
+                    </div>
+                    <button type="submit" class="btn">Start Collection Job</button>
+                </form>
+            </div>
+
+            <!-- Current Job Details -->
+            <div class="current-job-details">
+                <h3>Current Job Status</h3>
+                <div id="current-job-info-detailed">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <!-- Job History -->
+            <div class="job-history-section">
+                <h3>Job History</h3>
+                <table class="table" id="job-history-table">
+                    <thead>
+                        <tr>
+                            <th>Job ID</th>
+                            <th>Status</th>
+                            <th>Start Time</th>
+                            <th>Duration</th>
+                            <th>Collected</th>
+                            <th>Processed</th>
+                            <th>Stored</th>
+                            <th>Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="8">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Data Section -->
+        <section id="data-section" class="content-section">
+            <h2>Data Management</h2>
+            
+            <!-- Export Form -->
+            <div class="export-form-section">
+                <h3>Export Data</h3>
+                <form id="export-form">
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label">Export Formats:</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" name="formats" value="json" class="form-checkbox" checked> JSON</label>
+                                    <label><input type="checkbox" name="formats" value="csv" class="form-checkbox" checked> CSV</label>
+                                    <label><input type="checkbox" name="formats" value="xlsx" class="form-checkbox"> Excel</label>
+                                    <label><input type="checkbox" name="formats" value="xml" class="form-checkbox"> XML</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label class="form-label">Options:</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" name="compress" class="form-checkbox"> Compress files</label>
+                                    <label><input type="checkbox" name="include_metadata" class="form-checkbox" checked> Include metadata</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Export Data</button>
+                </form>
+            </div>
+
+            <!-- Export Statistics -->
+            <div class="export-stats-section">
+                <h3>Export Statistics</h3>
+                <div id="export-stats">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <!-- Drama List -->
+            <div class="drama-list-section">
+                <h3>Drama Collection</h3>
+                <table class="table" id="drama-list-table">
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Year</th>
+                            <th>Rating</th>
+                            <th>Genre</th>
+                            <th>Source</th>
+                            <th>Quality</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="7">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Config Section -->
+        <section id="config-section" class="content-section">
+            <h2>Configuration Management</h2>
+            
+            <div class="config-actions">
+                <button class="btn" onclick="dashboard.loadConfiguration()">Reload Configuration</button>
+                <button class="btn btn-secondary" onclick="dashboard.apiCall('/config/reload', {method: 'POST'}).then(() => dashboard.showAlert('success', 'Configuration reloaded'))">Reload from File</button>
+            </div>
+
+            <div class="config-display-section">
+                <h3>Current Configuration</h3>
+                <div id="config-display">
+                    <p>Loading...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Monitoring Section -->
+        <section id="monitoring-section" class="content-section">
+            <h2>System Monitoring</h2>
+            
+            <!-- System Health -->
+            <div class="health-section">
+                <h3>System Health</h3>
+                <div id="system-health">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <!-- Performance Statistics -->
+            <div class="performance-section">
+                <h3>Performance Statistics</h3>
+                <div id="performance-stats">
+                    <p>Loading...</p>
+                </div>
+            </div>
+
+            <!-- Charts (placeholder for future implementation) -->
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Job Success Rate</h3>
+                    <p>Chart placeholder - can be implemented with Chart.js or similar library</p>
+                </div>
+                <div class="chart-card">
+                    <h3>Processing Performance</h3>
+                    <p>Chart placeholder - can be implemented with Chart.js or similar library</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

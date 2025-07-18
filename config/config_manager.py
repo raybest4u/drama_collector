@@ -129,9 +129,9 @@ class ConfigManager:
     """配置管理器"""
     
     def __init__(self, config_file: Optional[str] = None):
-        self.config_file = config_file or self._find_config_file()
         self.config: SystemConfig = SystemConfig()
         self.config_history: List[Dict[str, Any]] = []
+        self.config_file = config_file or self._find_config_file()
         
         # 加载配置
         self._load_config()
